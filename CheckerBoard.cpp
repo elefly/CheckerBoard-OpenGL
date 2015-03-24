@@ -23,6 +23,8 @@ static GLuint texName;
 
 bool bFullScreen = false;
 
+int nPose = 0;
+
 void makeCheckImage(void)
 {
    int i, j, c;
@@ -207,6 +209,7 @@ Mat screenShot()
 	Mat image(height, width, CV_8UC3, pixels);
 	flip(image, image, 0);
 	cvtColor(image, image, CV_RGB2GRAY);
+	imwrite("screenshot.jpg", image);
 	//imshow("", image);
 	//waitKey(0);
 	return image;
@@ -216,17 +219,17 @@ bool findCorners(Mat* image, int nRow, int nCol)
 {
 	vector<Point2f> corners;
 	bool bFind = findChessboardCorners(*image, Size(nRow, nCol), corners, CV_CALIB_CB_ADAPTIVE_THRESH | CV_CALIB_CB_FAST_CHECK | CV_CALIB_CB_NORMALIZE_IMAGE );
-
+	
 	if(bFind)
 	{
-		cout << "found checkerboard" << endl;
-		Mat result = (*image).clone();
+		cout << "found desired checkerboard" << endl;
+		//Mat result = (*image).clone();
 		//drawChessboardCorners(result, Size(nRow, nCol), corners, bFind);
 		//imshow("result", result);
 		//waitKey(-1);
 	}
 	else
-		cout << "no checkerboard" << endl;
+		cout << "no desired checkerboard" << endl;
 
 	return bFind;
 }
@@ -237,40 +240,40 @@ void randomRT(int count)
 	double transX, transY, transZ;
 	int n = 0;
 	int i = 0;
-	while(1)
+	//while(1)
 	{
-		if (n >= count)
+		/*if (n >= count)
 		{
 			cout << i << " iterations" << endl;
 			break;
-		}
+		}*/
 
-		reshape(glutGet(GLUT_WINDOW_WIDTH), glutGet(GLUT_WINDOW_HEIGHT));
+		//reshape(glutGet(GLUT_WINDOW_WIDTH), glutGet(GLUT_WINDOW_HEIGHT));
 		glMatrixMode(GL_MODELVIEW);
 		glLoadIdentity();
-		transX = static_cast <double> (rand()) / static_cast <double> (RAND_MAX) * 0.2 - 0.1;
-		transY = static_cast <double> (rand()) / static_cast <double> (RAND_MAX) * 0.1 - 0.05;
-		transZ = -static_cast <double> (rand()) / static_cast <double> (RAND_MAX) * 4.0 - 2.0;
-		glTranslated(0, 0, transZ);
+		transX = static_cast <double> (rand()) / static_cast <double> (RAND_MAX) * 1.0 - 0.5;
+		transY = static_cast <double> (rand()) / static_cast <double> (RAND_MAX) * 1.0 - 0.5;
+		transZ = -static_cast <double> (rand()) / static_cast <double> (RAND_MAX) * 2.0 - 2.0;
+		glTranslated(transX, transY, transZ);
 		//glTranslated(0, 0, 2);
 		//glLoadIdentity();
-		angle = static_cast <double> (rand()) / static_cast <double> (RAND_MAX) * 180.0 - 90.0;
+		angle = static_cast <double> (rand()) / static_cast <double> (RAND_MAX) * 90.0 - 45.0;
 		glRotated(angle, 1, 0, 0);
-		angle = static_cast <double> (rand()) / static_cast <double> (RAND_MAX) * 180.0 - 90.0;
+		angle = static_cast <double> (rand()) / static_cast <double> (RAND_MAX) * 90.0 - 45.0;
 		glRotated(angle, 0, 1, 0);
-		angle = static_cast <double> (rand()) / static_cast <double> (RAND_MAX) * 180.0 - 90.0;
+		angle = static_cast <double> (rand()) / static_cast <double> (RAND_MAX) * 90.0 - 45.0;
 		glRotated(angle, 0, 0, 1);
 
-		i++;
+		//i++;
 		//glFlush();
 		glutSwapBuffers();
-		Sleep(100);
+		//Sleep(100);
 
-		Mat snap = screenShot();
+		//Mat snap = screenShot();
 		//imshow("", snap);
 		//waitKey(1000);
-		if (findCorners(&snap, 8, 15))
-			n++;
+		//if (findCorners(&snap, 8, 15))
+			//n++;
 	}
 }
 
@@ -313,6 +316,8 @@ void keyboard (unsigned char key, int x, int y)
 		  glRotated(10, 0, 0, 1);*/
 		  glMatrixMode(GL_MODELVIEW);
 		  glRotated(10, 0, 0, 1);
+		  glFlush();
+		  glutSwapBuffers();
 		  glFlush();
 		  glutSwapBuffers();
 		  break;
@@ -388,6 +393,45 @@ void keyboard (unsigned char key, int x, int y)
    }
 }
 
+void generatePose(int count)
+{
+	cout << "Pose generated" << endl;
+
+	double angle = 0;
+	double transX, transY, transZ;
+
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	
+		//glTranslated(0, 0, 2);
+		//glLoadIdentity();
+	angle = static_cast <double> (rand()) / static_cast <double> (RAND_MAX) * 90.0 - 45.0;
+	glRotated(angle, 1, 0, 0);
+	angle = static_cast <double> (rand()) / static_cast <double> (RAND_MAX) * 90.0 - 45.0;
+	glRotated(angle, 0, 1, 0);
+	angle = static_cast <double> (rand()) / static_cast <double> (RAND_MAX) * 90.0 - 45.0;
+	glRotated(angle, 0, 0, 1);
+
+	transX = static_cast <double> (rand()) / static_cast <double> (RAND_MAX) *2.0 - 1.0;
+	transY = static_cast <double> (rand()) / static_cast <double> (RAND_MAX) * 2.0 - 1.0;
+	transZ = -static_cast <double> (rand()) / static_cast <double> (RAND_MAX) * 4.0 - 2.0;
+	glTranslated(transX, transX, transZ);
+
+	glFlush();
+	glutSwapBuffers();
+
+	Mat snap = screenShot();
+		//imshow("", snap);
+		//waitKey(1000);
+	if (findCorners(&snap, 8, 15))
+		nPose++;
+
+	if ( nPose < count)
+		glutTimerFunc(100, generatePose, count);
+	else
+		cout << "All pose generated" << endl;
+}
+
 int _tmain(int argc, char* argv[])
 {	
 	int winWidth = 1920;
@@ -404,6 +448,7 @@ int _tmain(int argc, char* argv[])
 	glutReshapeFunc(reshape);
 	glutKeyboardFunc(keyboard);
 	glutSpecialFunc(specialKeyboard);
+	//glutTimerFunc(100, generatePose, 10);
 	glutMainLoop();
 	return 0;
 }
