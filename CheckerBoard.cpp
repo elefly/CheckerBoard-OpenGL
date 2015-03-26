@@ -90,6 +90,18 @@ void buildProjection( double *frustum, double alpha, double beta, double skew, d
 	memcpy_s(frustum, 16 * 64, frustumMat.data, 16 * 64);
 }
 
+Mat generateCameraMatrix(double focalLength, double px, double py)
+{
+	Mat k = Mat::zeros(3, 3, CV_64FC1);
+	k.at<double>(0, 0) = focalLength;
+	k.at<double>(1, 1) = focalLength;
+	k.at<double>(0, 2) = px;
+	k.at<double>(1, 2) = py;
+	k.at<double>(2, 2) = 1;
+
+	return k;
+}
+
 void init(void)
 {    
    glClearColor (1.0, 1.0, 1.0, 0.0);
@@ -125,8 +137,8 @@ void display(void)
    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
    glBindTexture(GL_TEXTURE_2D, texName);
    glBegin(GL_QUADS);
-   GLfloat w = checkImageWidth / 10 * 0.1;
-   GLfloat h = checkImageHeight / 10 * 0.1;
+   GLfloat w = checkImageWidth / 10.0 * 0.1;
+   GLfloat h = checkImageHeight / 10.0 * 0.1;
    /*glTexCoord2f(0.0, 0.0); glVertex3f(-1.0, -1.0, 0.0);
    glTexCoord2f(0.0, 1.0); glVertex3f(-1.0, 1.0, 0.0);
    glTexCoord2f(1.0, 1.0); glVertex3f(1.0, 1.0, 0.0);
@@ -152,7 +164,7 @@ void reshape(int w, int h)
     //buildProjection(frustum, 100.0, 100.0, 0.0, w/2, h/2, w, h, 0.001, 1000.0);
 	GLdouble Near = 0.001;
 	GLdouble Far = 1000.0;
-	double focal = 1000.0;
+	double focal = 2000.0;
 	Mat perspMat = Mat::zeros(4, 4, CV_64FC1);
 	perspMat.at<double>(0, 0) = focal;
 	perspMat.at<double>(0, 2) = -w/2;
@@ -173,7 +185,7 @@ void reshape(int w, int h)
     //gluPerspective(45.0, (GLfloat) w/(GLfloat) h, 0.001, 1000.0);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    glTranslatef(0.0, 0.0, -2.0);
+    glTranslatef(0.0, 0.0, -5.0);
     //delete []frustum;
 }
 
@@ -223,6 +235,10 @@ bool findCorners(Mat* image, int nRow, int nCol)
 	if(bFind)
 	{
 		cout << "found desired checkerboard" << endl;
+		for (int i = 0; i < corners.size(); i ++)
+		{
+			cout << corners[i] << endl;
+		}
 		//Mat result = (*image).clone();
 		//drawChessboardCorners(result, Size(nRow, nCol), corners, bFind);
 		//imshow("result", result);
