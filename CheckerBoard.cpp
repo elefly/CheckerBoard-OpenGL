@@ -1,6 +1,5 @@
 // CheckerBoard.cpp : Defines the entry point for the console application.
 //
-
 #include "stdafx.h"
 #include <Windows.h>
 #include <GL/gl.h>
@@ -11,12 +10,27 @@
 #include <iostream>
 #include <opencv2\opencv.hpp>
 
+#define _USE_MATH_DEFINES
+#include <math.h>
+
+
 using namespace std;
 using namespace cv;
 
 /*  Create checkerboard texture  */
 #define checkImageWidth 128
 #define checkImageHeight 72
+
+struct BoardPose
+{
+	double angleX;
+	double angleY;
+	double angleZ;
+	double transX;
+	double transY;
+	double transZ;
+};
+
 static GLubyte checkImage[checkImageHeight][checkImageWidth][4];
 
 static GLuint texName;
@@ -24,6 +38,8 @@ static GLuint texName;
 bool bFullScreen = false;
 
 int nPose = 0;
+
+BoardPose pose[24];
 
 void makeCheckImage(void)
 {
@@ -38,6 +54,17 @@ void makeCheckImage(void)
          checkImage[i][j][3] = (GLubyte) 255;
       }
    }
+
+   /*for (i = 64; i < 72; i ++)
+   {
+	   for (j = 120; j < 128; j++)
+	   {
+		   checkImage[i][j][0] = (GLubyte) 255;
+		   checkImage[i][j][1] = (GLubyte) 0;
+		   checkImage[i][j][2] = (GLubyte) 0;
+		   checkImage[i][j][3] = (GLubyte) 255;
+	   }
+   }*/
 }
 
 void buildProjection( double *frustum, double alpha, double beta, double skew, double u0, double v0, int img_width, int img_height, double near_clip, double far_clip )
@@ -164,7 +191,7 @@ void reshape(int w, int h)
     //buildProjection(frustum, 100.0, 100.0, 0.0, w/2, h/2, w, h, 0.001, 1000.0);
 	GLdouble Near = 0.001;
 	GLdouble Far = 1000.0;
-	double focal = 2000.0;
+	double focal = 1000.0;
 	Mat perspMat = Mat::zeros(4, 4, CV_64FC1);
 	perspMat.at<double>(0, 0) = focal;
 	perspMat.at<double>(0, 2) = -w/2;
@@ -185,7 +212,7 @@ void reshape(int w, int h)
     //gluPerspective(45.0, (GLfloat) w/(GLfloat) h, 0.001, 1000.0);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    glTranslatef(0.0, 0.0, -5.0);
+    glTranslatef(0.0, 0.0, -3.0);
     //delete []frustum;
 }
 
@@ -331,9 +358,8 @@ void keyboard (unsigned char key, int x, int y)
 		  /*glMatrixMode(GL_TEXTURE);
 		  glRotated(10, 0, 0, 1);*/
 		  glMatrixMode(GL_MODELVIEW);
-		  glRotated(10, 0, 0, 1);
-		  glFlush();
-		  glutSwapBuffers();
+		  //glRotated(10, 0, 0, 1);
+		  glTranslated(0, 0, 0.1);
 		  glFlush();
 		  glutSwapBuffers();
 		  break;
@@ -341,7 +367,8 @@ void keyboard (unsigned char key, int x, int y)
 		  /*glMatrixMode(GL_TEXTURE);
 		  glRotated(-10, 0, 0, 1);*/
 		  glMatrixMode(GL_MODELVIEW);
-		  glRotated(-10, 0, 0, 1);
+		  //glRotated(-10, 0, 0, 1);
+		  glTranslated(0, 0, -0.1);
 		  glFlush();
 		  glutSwapBuffers();
 		  break;
@@ -397,7 +424,13 @@ void keyboard (unsigned char key, int x, int y)
 		  }
 		  break;
 	  case 'a':
-		  randomRT(10);
+		  //randomRT(10);
+		  glMatrixMode(GL_MODELVIEW);
+		  glLoadIdentity();
+		  //glTranslated(0, 0, -3.0);
+		  glRotated(45.0, 1, 0, 0);
+		  glRotated(45.0, 0, 1, 0);
+		  glTranslated(0, 0, -3.0);
 		  break;
 	  case 'r':
 		  glMatrixMode(GL_MODELVIEW);
@@ -409,62 +442,108 @@ void keyboard (unsigned char key, int x, int y)
    }
 }
 
-void generatePose(int count)
+//void generatePose(int count)
+//{
+//	cout << "Pose generated" << endl;
+//
+//	double angle = 0;
+//	double transX, transY, transZ;
+//
+//	glMatrixMode(GL_MODELVIEW);
+//	glLoadIdentity();
+//	
+//		//glTranslated(0, 0, 2);
+//		//glLoadIdentity();
+//	angle = static_cast <double> (rand()) / static_cast <double> (RAND_MAX) * 90.0 - 45.0;
+//	glRotated(angle, 1, 0, 0);
+//	angle = static_cast <double> (rand()) / static_cast <double> (RAND_MAX) * 90.0 - 45.0;
+//	glRotated(angle, 0, 1, 0);
+//	angle = static_cast <double> (rand()) / static_cast <double> (RAND_MAX) * 90.0 - 45.0;
+//	glRotated(angle, 0, 0, 1);
+//
+//	transX = static_cast <double> (rand()) / static_cast <double> (RAND_MAX) *2.0 - 1.0;
+//	transY = static_cast <double> (rand()) / static_cast <double> (RAND_MAX) * 2.0 - 1.0;
+//	transZ = -static_cast <double> (rand()) / static_cast <double> (RAND_MAX) * 4.0 - 2.0;
+//	glTranslated(transX, transX, transZ);
+//
+//	glFlush();
+//	glutSwapBuffers();
+//
+//	Mat snap = screenShot();
+//		//imshow("", snap);
+//		//waitKey(1000);
+//	if (findCorners(&snap, 8, 15))
+//		nPose++;
+//
+//	if ( nPose < count)
+//		glutTimerFunc(100, generatePose, count);
+//	else
+//		cout << "All pose generated" << endl;
+//}
+void changePose(int count)
 {
-	cout << "Pose generated" << endl;
-
-	double angle = 0;
-	double transX, transY, transZ;
-
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-	
-		//glTranslated(0, 0, 2);
-		//glLoadIdentity();
-	angle = static_cast <double> (rand()) / static_cast <double> (RAND_MAX) * 90.0 - 45.0;
-	glRotated(angle, 1, 0, 0);
-	angle = static_cast <double> (rand()) / static_cast <double> (RAND_MAX) * 90.0 - 45.0;
-	glRotated(angle, 0, 1, 0);
-	angle = static_cast <double> (rand()) / static_cast <double> (RAND_MAX) * 90.0 - 45.0;
-	glRotated(angle, 0, 0, 1);
-
-	transX = static_cast <double> (rand()) / static_cast <double> (RAND_MAX) *2.0 - 1.0;
-	transY = static_cast <double> (rand()) / static_cast <double> (RAND_MAX) * 2.0 - 1.0;
-	transZ = -static_cast <double> (rand()) / static_cast <double> (RAND_MAX) * 4.0 - 2.0;
-	glTranslated(transX, transX, transZ);
-
-	glFlush();
-	glutSwapBuffers();
-
-	Mat snap = screenShot();
-		//imshow("", snap);
-		//waitKey(1000);
-	if (findCorners(&snap, 8, 15))
-		nPose++;
-
+	glTranslated(pose[nPose].transX, pose[nPose].transY, pose[nPose].transZ);
+	glRotated(pose[nPose].angleZ, 0, 0, 1);
+	glRotated(pose[nPose].angleY, 0, 1, 0);
+	glRotated(pose[nPose].angleX, 1, 0, 0);
+	nPose ++;
 	if ( nPose < count)
-		glutTimerFunc(100, generatePose, count);
+		glutTimerFunc(500, changePose, count);
 	else
 		cout << "All pose generated" << endl;
+}
+
+void generatePose(BoardPose *pose)
+{
+	
+	for (int i = 0; i < 4; i ++)
+	{
+		for (int j = 0; j < 6; j ++)
+		{
+			//while(1)
+			{
+				double angleX = static_cast <double> (rand()) / static_cast <double> (RAND_MAX) * 90.0 - 45.0;
+				double angleY = static_cast <double> (rand()) / static_cast <double> (RAND_MAX) * 90.0 - 45.0;
+				double angleZ = static_cast <double> (rand()) / static_cast <double> (RAND_MAX) * 60.0 + static_cast <double> (j) * 60.0;
+
+				double X = static_cast <double> (rand()) / static_cast <double> (RAND_MAX) * 0.96 + 0.96;
+				double Y = static_cast <double> (rand()) / static_cast <double> (RAND_MAX) * 0.54 + 0.54;
+				double Z = static_cast <double> (rand()) / static_cast <double> (RAND_MAX) * (-1.0) - 2.5;
+
+				pose[i * 6 + j].angleX = angleX;
+				pose[i * 6 + j].angleY = angleY;
+				pose[i * 6 + j].angleZ = angleZ;
+				pose[i * 6 + j].transX = X * cos((45.0 + 90.0 * (double)i) * M_PI / 180.0) * sqrt(2.0);
+				pose[i * 6 + j].transY = Y * sin((45.0 + 90.0 * (double)i) * M_PI / 180.0) * sqrt(2.0);
+				pose[i * 6 + j].transZ = Z;
+
+				cout << angleX << " " << angleY << " " << angleZ << " " << X << " " << Y << " " << Z << endl;
+			}
+		}
+	}
 }
 
 int _tmain(int argc, char* argv[])
 {	
 	int winWidth = 1920;
 	int widHeight = 1080;
+	
+	generatePose(pose);
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
 	glutInitWindowSize(winWidth, widHeight);
 	glutInitWindowPosition(0, 0);
 	glutCreateWindow("Checker Board");
-	//glutFullScreen();
+	glutFullScreen();
 	init();
 	glutDisplayFunc(display);
 	glutIdleFunc(display);
 	glutReshapeFunc(reshape);
 	glutKeyboardFunc(keyboard);
 	glutSpecialFunc(specialKeyboard);
-	//glutTimerFunc(100, generatePose, 10);
+	glutTimerFunc(500, changePose, 2);
 	glutMainLoop();
 	return 0;
 }
